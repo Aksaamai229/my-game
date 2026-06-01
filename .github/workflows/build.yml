@@ -1,5 +1,4 @@
 name: Build APK
-
 on:
   push:
     branches: [ main, master ]
@@ -8,35 +7,18 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
+      - name: Build APK with Buildozer Action
+        uses: ArtemGovorov/buildozer-action@v1
+        with:
+          workdir: .
+          buildozer_version: stable
 
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y libffi-dev libssl-dev autoconf automake libtool pkg-config cmake textclean zip unzip openjdk-17-jdk-headless
-        pip install --upgrade pip
-        pip install git+https://github.com/kivy/buildozer.git cython
-
-    - name: Build with Buildozer
-      run: |
-        buildozer init
-        sed -i 's/#android.accept_sdk_license = False/android.accept_sdk_license = True/' buildozer.spec
-        sed -i 's/android.api = 33/android.api = 31/' buildozer.spec
-        sed -i 's/# log_level = 2/log_level = 2/' buildozer.spec
-        
-        export BUILDOZER_ALLOW_KIVY_APP_AS_ROOT=1
-        yes | buildozer -v android debug
-
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: game-apk
-        path: bin/*.apk
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: game-apk
+          path: bin/*.apk
