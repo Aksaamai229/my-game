@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
 
     steps:
     - name: Checkout code
@@ -16,22 +16,42 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.10'
+        python-version: '3.9'
 
-    - name: Install dependencies
+    - name: Install System Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y libffi-dev libssl-dev autoconf automake libtool pkg-config cmake textclean zip unzip openjdk-17-jdk-headless
-        pip install --upgrade pip
-        pip install git+https://github.com/kivy/buildozer.git cython
+        sudo apt-get install -y \
+          build-essential \
+          git \
+          ffmpeg \
+          libgstreamer1.0-dev \
+          gstreamer1.0-plugins-base \
+          gstreamer1.0-plugins-good \
+          libffi-dev \
+          libssl-dev \
+          autoconf \
+          automake \
+          libtool \
+          pkg-config \
+          cmake \
+          unzip \
+          zip \
+          openjdk-17-jdk-headless
 
-    - name: Build with Buildozer
+    - name: Install Python Dependencies
       run: |
-        buildozer init
-        sed -i 's/#android.accept_sdk_license = False/android.accept_sdk_license = True/' buildozer.spec
-        sed -i 's/android.api = 33/android.api = 31/' buildozer.spec
-        sed -i 's/# log_level = 2/log_level = 2/' buildozer.spec
-        
+        python -m pip install --upgrade pip
+        python -m pip install Cython==0.29.33 wheel
+        python -m pip install git+https://github.com/kivy/buildozer.git
+
+    - name: Configure and Build
+      run: |
+        if [ ! -f buildozer.spec ]; then
+          buildozer init
+          sed -i 's/#android.accept_sdk_license = False/android.accept_sdk_license = True/' buildozer.spec
+          sed -i 's/android.api = 33/android.api = 31/' buildozer.spec
+        fi
         export BUILDOZER_ALLOW_KIVY_APP_AS_ROOT=1
         yes | buildozer -v android debug
 
